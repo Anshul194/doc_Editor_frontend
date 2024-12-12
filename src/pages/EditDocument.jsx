@@ -47,14 +47,38 @@ const EditDocument = () => {
 
   useEffect(() => {
     if (quill == null || !currentDoc?._id) return;
-
+  
+    // Emit event to fetch the document
     socket.emit('get-doc', { docId: currentDoc?._id });
-
+  
+    // Load the initial document content
     socket.once('load-document', (document) => {
       quill.setContents(document);
       quill.enable();
     });
+  
+  
+    const handleSaveDocReceive = (data) => {
+      console.log('Received document update:', data);
+
+      if (data && data.docId === id && editorRef.current) {
+        if (data.title) {
+          console.log('1')
+          setTitle(data.title);
+        }
+        setContent('fdghjkl');
+      }
+    };
+
+    socket.on('save-doc-receive', handleSaveDocReceive);
+  
+    // Clean up event listeners on unmount
+    return () => {
+      socket.off('load-document');
+      socket.off('save-doc-receive');
+    };
   }, [quill, socket, currentDoc]);
+  
 
   useEffect(() => {
     if (isModalOpen && auth?.token && currentDoc?._id) {
